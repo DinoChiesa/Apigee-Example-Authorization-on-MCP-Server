@@ -1,0 +1,70 @@
+<ProxyEndpoint name="endpoint1">
+
+  <HTTPProxyConnection>
+    <BasePath>/.well-known</BasePath>
+  </HTTPProxyConnection>
+
+  <FaultRules/>
+  <DefaultFaultRule name="default-fault-rule">
+    <Step>
+      <Name>AM-Inject-Proxy-Revision-Header</Name>
+    </Step>
+    <AlwaysEnforce>true</AlwaysEnforce>
+  </DefaultFaultRule>
+
+  <PreFlow name="PreFlow">
+    <Response>
+    </Response>
+  </PreFlow>
+
+  <PostFlow name="PostFlow">
+    <Request/>
+    <Response>
+      <Step>
+        <Name>AM-Clean-Response-Headers</Name>
+      </Step>
+      <Step>
+        <Name>AM-Inject-Proxy-Revision-Header</Name>
+      </Step>
+    </Response>
+  </PostFlow>
+
+  <PostClientFlow name="PostFlow">
+    <Request/>
+    <Response>
+    </Response>
+  </PostClientFlow>
+
+  <Flows>
+    <Flow name="oauth-protected-resource-metadata">
+      <Response>
+        <Step>
+          <Name>JS-Extract-Protected-Resource-Path</Name>
+        </Step>
+        <Step>
+          <Name>AM-OAuth-Protected-Resource-Response</Name>
+        </Step>
+      </Response>
+      <!-- full path will be eg,
+           /.well-known/oauth-protected-resource/mcp-access-control/mcp/ -->
+      <Condition>
+        proxy.pathsuffix ~~ "/oauth-protected-resource/([^/]+)(/mcp|/mcp/|/)?" AND
+        request.verb = "GET"
+      </Condition>
+    </Flow>
+
+    <Flow name="unknown-request">
+      <Request>
+        <Step>
+          <Name>RF-Unknown-Request</Name>
+        </Step>
+      </Request>
+      <Response/>
+    </Flow>
+
+  </Flows>
+
+  <RouteRule name='rule1'>
+  </RouteRule>
+
+</ProxyEndpoint>

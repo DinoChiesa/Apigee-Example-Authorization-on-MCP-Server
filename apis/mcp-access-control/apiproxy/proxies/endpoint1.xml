@@ -1,0 +1,85 @@
+<ProxyEndpoint name="endpoint1">
+
+  <HTTPProxyConnection>
+    <BasePath>/mcp-access-control</BasePath>
+  </HTTPProxyConnection>
+
+  <FaultRules/>
+  <DefaultFaultRule name="default-fault-rule">
+    <Step>
+      <Name>AM-Inject-Proxy-Revision-Header</Name>
+    </Step>
+    <Step>
+      <Name>AM-Diags</Name>
+    </Step>
+    <AlwaysEnforce>true</AlwaysEnforce>
+  </DefaultFaultRule>
+
+  <PreFlow name="PreFlow">
+    <Response>
+    </Response>
+  </PreFlow>
+
+  <PostFlow name="PostFlow">
+    <Request/>
+    <Response>
+      <Step>
+        <Name>AM-Inject-Proxy-Revision-Header</Name>
+      </Step>
+    </Response>
+  </PostFlow>
+
+  <PostClientFlow name="PostFlow">
+    <Request/>
+    <Response>
+    </Response>
+  </PostClientFlow>
+
+  <Flows>
+
+    <Flow name="mcp">
+      <Request>
+        <Step>
+          <Condition>request.header.authorization = null</Condition>
+          <Name>RF-Missing-Authz-Header</Name>
+        </Step>
+
+        <Step>
+          <Name>VerifyJWT-1</Name>
+        </Step>
+
+        <!-- TODO: add VerifyAPIKey -->
+        <!--
+        <Step>
+          <Name>VerifyJWT-1</Name>
+        </Step>
+        -->
+
+        <Step>
+          <Name>AM-AccessControl-Variables</Name>
+        </Step>
+
+        <Step>
+          <Name>EC-1</Name>
+        </Step>
+
+        <Step>
+          <Condition>accesscontrol.result != "ALLOW"</Condition>
+          <Name>RF-Access-Denied</Name>
+        </Step>
+      </Request>
+      <Response>
+      </Response>
+      <Condition>
+        proxy.pathsuffix ~~ "/mcp/?" and
+        (request.verb = "GET" OR request.verb = "POST")
+      </Condition>
+    </Flow>
+
+  </Flows>
+
+  <RouteRule name='rule1'>
+    <TargetEndpoint>target1</TargetEndpoint>
+  </RouteRule>
+
+</ProxyEndpoint>

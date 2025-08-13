@@ -1,0 +1,8 @@
+<VerifyJWT name='VerifyJWT-1'>
+  <Algorithm>RS256</Algorithm>
+  <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
+  <PublicKey>
+    <JWKS uriRef="propertyset.settings.oidc_server_jwks"/>
+  </PublicKey>
+  <Issuer ref="propertyset.settings.oidc_server_issuer"/>
+</VerifyJWT>

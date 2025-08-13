@@ -1,0 +1,7 @@
+<Javascript name='JS-Extract-Protected-Resource-Path' timeLimit='200'>
+  <Source><![CDATA[
+  var p = context.getVariable('proxy.pathsuffix');
+  context.setVariable('extracted.resource_path', p.replace('/oauth-protected-resource',''));
+  ]]>
+  </Source>
+</Javascript>

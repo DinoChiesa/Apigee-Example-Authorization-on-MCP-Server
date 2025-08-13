@@ -1,0 +1,4 @@
+<APIProxy name="mcp-access-control">
+  <ConfigurationVersion majorVersion="4" minorVersion="0"/>
+  <DisplayName>mcp-access-control</DisplayName>
+</APIProxy>

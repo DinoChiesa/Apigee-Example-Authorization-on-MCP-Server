@@ -1,0 +1,30 @@
+# Specify files that gcloud should ignore,  not  upload to Google Cloud Platform
+#
+# For more information, run:
+#   $ gcloud topic gcloudignore
+#
+.gcloudignore
+.gitignore
+bin
+obj
+lib
+images
+*.*~
+
+.git
+
+.aider*
+create-sheet-tool
+apiproxy
+
+*.sh
+*.md
+
+**/NOT_USED
+
+env.sh
+env-private.sh
+
+.remote-endpoint-*
+
+sampledata

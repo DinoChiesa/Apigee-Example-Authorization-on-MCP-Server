@@ -1,0 +1,7 @@
+fastmcp
+httpx
+pydantic
+uvicorn
+sqlite-regex
+inflect
+

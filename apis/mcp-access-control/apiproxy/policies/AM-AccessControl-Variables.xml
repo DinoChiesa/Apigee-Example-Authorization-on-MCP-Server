@@ -1,0 +1,35 @@
+<AssignMessage name='AM-AccessControl-Variables'>
+
+  <AssignVariable>
+    <Name>preserved-body</Name>
+    <Ref>request.content</Ref>
+    <Value>unset</Value>
+  </AssignVariable>
+
+  <!-- From the verified inbound JWT. -->
+  <!-- The payload will have claims like sub, group, audience, etc. -->
+  <AssignVariable>
+    <Name>accesscontrol.jwt_payload</Name>
+    <Ref>jwt.VerifyJWT-1.payload-json</Ref>
+    <Value>{}</Value>
+  </AssignVariable>
+
+  <AssignVariable>
+    <Name>accesscontrol.http_verb</Name>
+    <Ref>request.verb</Ref>
+  </AssignVariable>
+
+  <!-- From the JSONRPC payload -->
+  <AssignVariable>
+    <Name>accesscontrol.mcp_method</Name>
+    <Template>{jsonPath('$.method',request.content)}</Template>
+    <Value>unset</Value>
+  </AssignVariable>
+
+  <AssignVariable>
+    <Name>accesscontrol.mcp_tool</Name>
+    <Template>{jsonPath('$.params.name',request.content)}</Template>
+    <Value>unset</Value>
+  </AssignVariable>
+
+</AssignMessage>

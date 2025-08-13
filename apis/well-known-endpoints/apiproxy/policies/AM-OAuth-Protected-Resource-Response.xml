@@ -1,0 +1,17 @@
+<AssignMessage name='AM-OAuth-Protected-Resource-Response'>
+
+  <AssignVariable>
+    <Name>resource_url</Name>
+    <Template>{client.scheme}://{request.header.host}{extracted.resource_path}</Template>
+  </AssignVariable>
+
+  <Set>
+    <Payload contentType='application/json'>{
+  "resource": "{resource_url}",
+  "authorization_servers": [
+      "{propertyset.settings.oidc_server}"
+  ]
+}
+</Payload>
+  </Set>
+</AssignMessage>

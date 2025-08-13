@@ -1,0 +1,26 @@
+{
+  "Rules": [
+    ["Group", "HTTP Verb", "MCP Method", "Tool Name", "Result"],
+    ["any", "GET", "n/a", "n/a", "Allow"],
+    ["any", "POST", "initialize", "n/a", "Allow"],
+    ["any", "POST", "notifications/initialized", "n/a", "Allow"],
+    ["any", "POST", "tools/list", "n/a", "Allow"],
+    ["any", "POST", "prompts/list", "n/a", "Allow"],
+    ["any", "POST", "resources/list", "n/a", "Allow"],
+    ["", "", "", ""],
+    ["staff", "POST", "tools/call", "search_product", "Allow"],
+    ["staff", "POST", "tools/call", "update_product_price", "Allow"],
+    ["staff", "POST", "tools/call", "update_product_price", "Allow"],
+    ["", "", "", ""],
+    ["supplier", "POST", "tools/call", "search_product", "Allow"],
+    ["supplier", "POST", "tools/call", "update_product_price", "Deny"],
+    ["supplier", "POST", "tools/call", "update_product_quantity", "Allow"],
+    ["", "", "", ""]
+  ],
+  "Roles": [
+    ["Userid", "Role"],
+    ["not-sure-if-needed-person@example-company.com", "staff"],
+    ["*@partner1.org", "supplier"],
+    ["partner2@gmail.com", "supplier"]
+  ]
+}

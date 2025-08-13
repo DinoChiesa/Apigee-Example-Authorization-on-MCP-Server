@@ -1,0 +1,9 @@
+<AssignMessage name='AM-Diags'>
+
+  <AssignVariable>
+    <Name>diags</Name>
+    <Ref>fault.name</Ref>
+    <Value>unset</Value>
+  </AssignVariable>
+
+</AssignMessage>

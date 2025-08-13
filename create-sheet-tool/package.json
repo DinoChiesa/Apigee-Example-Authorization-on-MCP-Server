@@ -1,0 +1,17 @@
+{
+  "name": "create-sheet-tool-mcp",
+  "version": "1.0.1",
+  "main": "create-sheet.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "dchiesa@google.com",
+  "license": "Apache-2.0",
+  "description": "a tool to ingest some json data, representing access control rules, into a Google Sheet",
+  "dependencies": {
+    "dayjs": "^1.11.13",
+    "google-auth-library": "^10.1.0",
+    "googleapis": "^150.0.1"
+  }
+}
