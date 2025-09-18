@@ -203,7 +203,8 @@ Some implementation notes:
 1. In step 1, the access token that the agent sends, is obtained via a
    OAuthV2 authorization code grant type, from the OpenID Connect server
    registered for the particular MCP Server. You need to supply your own
-   OIDC Server for this.
+   OIDC Server for this.  You can use [Auth0.com](https://auth0.com/) for this.
+   For instructions, see [Auth0 setup](./Auth0-setup.md).
 
 2. The API Proxy assumes that the JWKS endpoint is available at
    `${OIDC_SERVER}/jwks` and the token issuer is the same as the `${OIDC_SERVER}` url.
