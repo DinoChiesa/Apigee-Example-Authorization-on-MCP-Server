@@ -174,15 +174,20 @@ Here's how it works.
  2. The Apigee API proxy verifies the access token, checking that it is
     valid for the given proxy.
 
- 3. If that passes, the Apigee API proxy calls to an external service, passing
-    it {jwt payload, MCP method, MCP tool}. This service happens to be
-    implemented in C#, but that's just a detail.
+ 3. If that passes, the Apigee API proxy calls to [an external access control
+    service](./access-control-server), passing it {jwt payload, MCP method, MCP
+    tool}. This service happens to be implemented in C#, but that's just a
+    detail.
 
- 4. The access control service calls the Google Sheets REST API to retrieve rules and roles.
-    (This is cached)
+ 4. The access control service uses the Google Sheets REST API to retrieve access control
+    rules from a Google Sheet. This data is cached in the Access Control service.
 
- 5. The access control service applies the access rules and returns a "ALLOW" or
-    "DENY" to the proxy.
+ 5. The access control service applies the access rules against the inbound data.
+    It uses the "az_groups" claim on the Access Token, and the MCP verb and tool, to find
+    a matching rule. If there is an ALLOW entry, the request is
+    allowed. Otherwise, not.
+
+    The service returns an "ALLOW" or "DENY" to the proxy.
 
  6. The proxy enforces that decision, and proxies to the upstream MCP Server for ALLOW,
     otherwise issues a 403 status.
@@ -191,11 +196,7 @@ Here's how it works.
 The rules look like this:
 ![Screenshot](./images/Screenshot-20250917-114812.png)
 
-And the logic that evaluates whether a request should be authorized, extracts
-the user identity from the access token, resolves that to a group/role, and then
-matches the MCP verb and tool. If there is an ALLOW entry, the request is
-allowed. Otherwise, not.
-
+And the logic that evaluates whether a request should be authorized,
 
 
 Some implementation notes:
@@ -203,8 +204,15 @@ Some implementation notes:
 1. In step 1, the access token that the agent sends, is obtained via a
    OAuthV2 authorization code grant type, from the OpenID Connect server
    registered for the particular MCP Server. You need to supply your own
-   OIDC Server for this.  You can use [Auth0.com](https://auth0.com/) for this.
-   For instructions, see [Auth0 setup](./Auth0-setup.md).
+   OIDC Server for this.
+
+   You may use [Auth0.com](https://auth0.com/);
+   for instructions, see [Auth0 setup](./Auth0-setup.md).
+
+   Whatever OIDC server you use, it must emit an access token with a claim
+   "az_groups" within it, which should be a list of strings. The [Access Control
+   Server](./access-control-server) examines that claim to determine whether to
+   allow the request.
 
 2. The API Proxy assumes that the JWKS endpoint is available at
    `${OIDC_SERVER}/jwks` and the token issuer is the same as the `${OIDC_SERVER}` url.
@@ -213,6 +221,7 @@ Some implementation notes:
    and efficient to call into, from your Apigee API Proxy, and it should be acceptable
    to incur that check for every API request. If the relatively low latency is still not
    acceptable, you can move the rules evaluation logic into the Apigee proxy itself.
+   That is not shown here.
 
 ### Why not use OPA for Access Control?
 
@@ -394,12 +403,12 @@ code as well as the API Proxy configuration.
 
 ## Bugs
 
-* The Cloud Run service is deployed to allow "unauthenticated access".  If you use
+* The Cloud Run service is deployed to allow "unauthenticated access". If you use
   something like this in a real system, you will want to deploy the Cloud Run service to
-  allow run.invoke from the service account your Access Control Service runs as.
+  allow `run.invoke` from the service account your Access Control Service runs as.
 
 * The API Proxy does not perform "VerifyAPIKey" on the client ID contained
   within the Access Token. This is a simple extension. It requires synchronizing
   the Apps in Apigee with the Client ID in the OIDC Server.
 
-* The C# service does not check for malformed rules or roles.
+* The Access Control service does not check for malformed rules.
