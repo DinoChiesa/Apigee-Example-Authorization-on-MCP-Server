@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <AssignMessage name="AM-Inject-User-Info-Header">
+  <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
   <Set>
     <Headers>
       <Header name='user-info'>sub={jwt.VerifyJWT-1.decoded.claim.sub}; group={jwt.VerifyJWT-1.decoded.claim.az_groups}; aud={jwt.VerifyJWT-1.decoded.claim.aud}; scope={jwt.VerifyJWT-1.decoded.claim.scope}</Header>
