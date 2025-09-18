@@ -144,18 +144,17 @@ namespace Server
             GsheetData rules = await _rds.GetAccessControlRules();
             if (rules?.Values != null)
             {
-                //GsheetData roles = await _rds.GetRoles();
                 // initialize to default value
                 List<string> groups = new List<string> { "none" };
-                // Extract the value for the "group" key. The value comes out as an 'object'.
+                // Extract the value for the "az_groups" key. The value comes out as an 'object'.
                 if (
-                    token.TryGetValue("group", out object groupObject)
-                    && groupObject is JsonElement groupElement
+                    token.TryGetValue("az_groups", out object groupsObject)
+                    && groupsObject is JsonElement groupsElement
                 )
                 {
                     try
                     {
-                        groups = groupElement.Deserialize<List<string>>();
+                        groups = groupsElement.Deserialize<List<string>>();
                     }
                     catch (JsonException) { }
                 }

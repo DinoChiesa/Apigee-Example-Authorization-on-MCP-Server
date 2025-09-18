@@ -7,7 +7,7 @@
   </AssignVariable>
 
   <!-- From the verified inbound JWT. -->
-  <!-- The payload will have claims like sub, group, audience, etc. -->
+  <!-- The payload will have claims like sub, aud, az_groups, etc. -->
   <AssignVariable>
     <Name>accesscontrol.jwt_payload</Name>
     <Ref>jwt.VerifyJWT-1.payload-json</Ref>
