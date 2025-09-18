@@ -133,7 +133,7 @@ fi
 replace_property_value "oidc_server_issuer" "${OIDC_SERVER}" \
                        "$tmpdir/apis/${PROXY_NAME}/apiproxy/resources/properties/settings.properties"
 
-replace_property_value "oidc_server_jwks" "${OIDC_SERVER}jwks" \
+replace_property_value "oidc_server_jwks" "${OIDC_SERVER}.well-known/jwks.json" \
                        "$tmpdir/apis/${PROXY_NAME}/apiproxy/resources/properties/settings.properties"
 
 replace_property_value "oidc_server" "$OIDC_SERVER" \
@@ -149,4 +149,4 @@ if [[ $need_wait -eq 1 ]]; then
   wait
 fi
 
-#rm -fr $tmpdir
+rm -fr $tmpdir
