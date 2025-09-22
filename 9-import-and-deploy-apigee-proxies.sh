@@ -78,7 +78,7 @@ replace_property_value() {
   local match_pattern="^${property_name} *= *.\\+"
   local replace_pattern="${property_name} = ${new_value}"
   local sed_script="s#${match_pattern}#${replace_pattern}#"
-  printf "sed script: %s\n" "$sed_script"
+  #printf "sed script: %s\n" "$sed_script"
   #  in-place editing
   local SEDOPTION="-i"
   if [[ "$OSTYPE" == "darwin"* ]]; then
