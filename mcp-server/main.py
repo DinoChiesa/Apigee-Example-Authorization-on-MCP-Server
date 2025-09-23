@@ -326,18 +326,48 @@ async def amend_order(
     if order["status"] != "pending":
         raise ToolError("cannot amend a finalized order")
 
-    # AI! implement the logic here to do the following:
-    #
-    # - if in the table order_items, for entries where order_id == order_id,
-    #   there is no item with product_id == product_id, then INSERT
-    #   an entry into order_items with order_id, product_id and qty
-    #
-    # - if in the table order_items, for entries where order_id == order_id,
-    #   there IS an item with product_id == product_id, then UPDATE the
-    #   order_items entry where order_id == order_id and product_id ==
-    #   product_id, with new qty == qty
-    #
-    ## Then compute the new total_amount for the order_items and qty.
+    if qty < 0:
+        raise ToolError("quantity must be non-negative")
+
+    cursor.execute("SELECT id FROM products WHERE id = ?", (product_id,))
+    if not cursor.fetchone():
+        raise ToolError(f"invalid product id: {product_id}")
+
+    cursor.execute(
+        "SELECT id FROM order_items WHERE order_id = ? AND product_id = ?",
+        (order_id, product_id),
+    )
+    order_item = cursor.fetchone()
+
+    if qty == 0:
+        if order_item:
+            cursor.execute(
+                "DELETE FROM order_items WHERE order_id = ? AND product_id = ?",
+                (order_id, product_id),
+            )
+    else:  # qty > 0
+        if order_item:
+            cursor.execute(
+                "UPDATE order_items SET quantity = ? WHERE order_id = ? AND product_id = ?",
+                (qty, order_id, product_id),
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)",
+                (order_id, product_id, qty),
+            )
+
+    cursor.execute(
+        """
+        SELECT SUM(oi.quantity * p.price) as total
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = ?
+        """,
+        (order_id,),
+    )
+    result = cursor.fetchone()
+    total_amount = result["total"] if result and result["total"] is not None else 0.0
 
     cursor.execute(
         "UPDATE orders SET total_amount = ? WHERE id = ?", (total_amount, order_id)
