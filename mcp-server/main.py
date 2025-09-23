@@ -22,11 +22,13 @@ import os
 import re
 import sqlite3
 import time
+from datetime import datetime
 from typing import Annotated, List, Optional
 
 import httpx
 import inflect
 import sqlite_regex
+from fastapi import Header
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from fastmcp.server.dependencies import get_http_headers
@@ -35,7 +37,7 @@ from pydantic import BaseModel, Field
 
 mcp = FastMCP(
     name="ACME Products MCP Service",
-    version="0.1.1",
+    version="0.1.2",
 )
 
 
@@ -94,7 +96,290 @@ class ProductRecord(BaseModel):
     ]
 
 
+class AccountRecord(BaseModel):
+    """Represents a single account."""
+
+    id: int
+    name: str
+    email: str
+    signup_date: str
+
+
+class OrderItemRecord(BaseModel):
+    """Represents a single item in an order."""
+
+    id: int
+    order_id: int
+    product_id: int
+    quantity: int
+    product_name: Optional[str] = None
+
+
+class OrderRecord(BaseModel):
+    """Represents a single order."""
+
+    id: int
+    account_id: int
+    order_date: str
+    status: str
+    total_amount: float
+    items: Optional[List[OrderItemRecord]] = None
+
+
 conn: Optional[sqlite3.Connection] = None
+
+
+def _get_user_info(user_info_header: str) -> dict:
+    """Parses the user-info header string."""
+    if not user_info_header:
+        # mock data for local testing
+        return {"name": "Bo Jackson", "email": "bo@bojackson.com"}
+    user_info = {}
+    for part in user_info_header.split(";"):
+        part = part.strip()
+        if "=" in part:
+            key, value = part.split("=", 1)
+            user_info[key.strip()] = value.strip()
+    return user_info
+
+
+@mcp.tool(
+    name="create_account",
+    description="Creates a new user account.",
+    tags={"account", "create"},
+)
+async def create_account(
+    user_info_header: Annotated[str | None, Header(alias="user-info")] = None,
+) -> str:
+    user_info = _get_user_info(user_info_header)
+    if not user_info.get("name") or not user_info.get("email"):
+        raise ToolError("user-info header must include name and email")
+
+    signup_date = datetime.now().isoformat()
+    sql = "INSERT INTO accounts (name, email, signup_date) VALUES (?, ?, ?)"
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (user_info["name"], user_info["email"], signup_date))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        raise ToolError("account with that email already exists")
+    return "account created successfully"
+
+
+@mcp.tool(
+    name="get_my_account",
+    description="Retrieves THE ACCOUNT DETAILS for the current user.",
+    tags={"account", "get"},
+)
+async def get_my_account(
+    user_info_header: Annotated[str | None, Header(alias="user-info")] = None,
+) -> AccountRecord:
+    user_info = _get_user_info(user_info_header)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM accounts WHERE email = ?", (user_info["email"],))
+    account = cursor.fetchone()
+    if not account:
+        raise ToolError("account not registered")
+    return AccountRecord(**dict(account))
+
+
+@mcp.tool(
+    name="create_order",
+    description="Creates a new order with a list of products.",
+    tags={"order", "create"},
+)
+async def create_order(
+    product_ids: Annotated[
+        List[int],
+        Field(description="List of IDs of product to initially add to the order."),
+    ],
+    user_info_header: Annotated[str | None, Header(alias="user-info")] = None,
+) -> OrderRecord:
+    user_info = _get_user_info(user_info_header)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM accounts WHERE email = ?", (user_info["email"],))
+    account = cursor.fetchone()
+    if not account:
+        raise ToolError("account not registered")
+    account_id = account["id"]
+
+    if not product_ids or len(product_ids) == 0 or len(product_ids) > 5:
+        raise ToolError(
+            "invalid products list. Must be an array of 1 to 5 product IDs."
+        )
+
+    # product_ids = [p.id for p in products]
+    placeholders = ",".join("?" * len(product_ids))
+    cursor.execute(
+        f"SELECT id, price FROM products WHERE id IN ({placeholders})", product_ids
+    )
+    product_rows = cursor.fetchall()
+
+    if len(product_rows) != len(product_ids):
+        found_ids = {row["id"] for row in product_rows}
+        not_found = [pid for pid in product_ids if pid not in found_ids]
+        raise ToolError(
+            f"one or more invalid product ids: {', '.join(map(str, not_found))}"
+        )
+
+    prices = {row["id"]: row["price"] for row in product_rows}
+    total_amount = sum(prices[id] for id in product_ids)
+
+    order_date = datetime.now().isoformat()
+    order_sql = "INSERT INTO orders (account_id, order_date, total_amount, status) VALUES (?, ?, ?, ?)"
+    cursor.execute(order_sql, (account_id, order_date, total_amount, "pending"))
+    order_id = cursor.lastrowid
+
+    item_sql = (
+        "INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)"
+    )
+    order_items_to_insert = [(order_id, id, 1) for id in product_ids]
+    cursor.executemany(item_sql, order_items_to_insert)
+
+    conn.commit()
+
+    return OrderRecord(
+        id=order_id,
+        account_id=account_id,
+        order_date=order_date,
+        status="pending",
+        total_amount=total_amount,
+    )
+
+
+@mcp.tool(
+    name="list_my_orders",
+    description="Lists all orders for the current user.",
+    tags={"order", "list"},
+)
+async def list_my_orders(
+    user_info_header: Annotated[str | None, Header(alias="user-info")] = None,
+) -> List[OrderRecord]:
+    user_info = _get_user_info(user_info_header)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM accounts WHERE email = ?", (user_info["email"],))
+    account = cursor.fetchone()
+    if not account:
+        raise ToolError("account not registered")
+    account_id = account["id"]
+
+    cursor.execute("SELECT * FROM orders WHERE account_id = ?", (account_id,))
+    orders = cursor.fetchall()
+    return [OrderRecord(**dict(order)) for order in orders]
+
+
+@mcp.tool(
+    name="get_order_details",
+    description="Retrieves details of a specific order.",
+    tags={"order", "get"},
+)
+async def get_order_details(
+    order_id: Annotated[int, Field(description="The ID of the order to retrieve.")],
+    details: Annotated[
+        bool, Field(description="Whether to include order item details.")
+    ] = False,
+    user_info_header: Annotated[str | None, Header(alias="user-info")] = None,
+) -> OrderRecord:
+    user_info = _get_user_info(user_info_header)
+    cursor = conn.cursor()
+    sql = "SELECT o.* FROM orders o JOIN accounts a ON o.account_id = a.id WHERE o.id = ? AND a.email = ?"
+    cursor.execute(sql, (order_id, user_info["email"]))
+    order = cursor.fetchone()
+    if not order:
+        raise ToolError("invalid orderId")
+
+    order_record = OrderRecord(**dict(order))
+
+    if details:
+        items_sql = "SELECT oi.*, p.name AS product_name FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?"
+        cursor.execute(items_sql, (order_id,))
+        items = cursor.fetchall()
+        order_record.items = [OrderItemRecord(**dict(item)) for item in items]
+
+    return order_record
+
+
+@mcp.tool(
+    name="amend_order",
+    description="Modifies an existing pending order.",
+    tags={"order", "amend", "update"},
+)
+async def amend_order(
+    order_id: Annotated[int, Field(description="The ID of the order to amend.")],
+    product_id: Annotated[
+        int,
+        Field(description="ID of product to update in the order."),
+    ],
+    qty: Annotated[
+        int,
+        Field(description="new quantity for the product to update in the order."),
+    ],
+    user_info_header: Annotated[str | None, Header(alias="user-info")] = None,
+) -> str:
+    user_info = _get_user_info(user_info_header)
+    cursor = conn.cursor()
+    sql = "SELECT o.* FROM orders o JOIN accounts a ON o.account_id = a.id WHERE o.id = ? AND a.email = ?"
+    cursor.execute(sql, (order_id, user_info["email"]))
+    order = cursor.fetchone()
+    if not order:
+        raise ToolError("invalid orderId")
+    if order["status"] != "pending":
+        raise ToolError("cannot amend a finalized order")
+
+    # AI! implement the logic here to do the following:
+    #
+    # - if in the table order_items, for entries where order_id == order_id,
+    #   there is no item with product_id == product_id, then INSERT
+    #   an entry into order_items with order_id, product_id and qty
+    #
+    # - if in the table order_items, for entries where order_id == order_id,
+    #   there IS an item with product_id == product_id, then UPDATE the
+    #   order_items entry where order_id == order_id and product_id ==
+    #   product_id, with new qty == qty
+    #
+    ## Then compute the new total_amount for the order_items and qty.
+
+    cursor.execute(
+        "UPDATE orders SET total_amount = ? WHERE id = ?", (total_amount, order_id)
+    )
+    conn.commit()
+
+    return "order amended successfully"
+
+
+async def _finalize_order(order_id: int, status: str, user_info_header: str) -> str:
+    user_info = _get_user_info(user_info_header)
+    cursor = conn.cursor()
+    sql = "UPDATE orders SET status = ? WHERE id = ? AND account_id = (SELECT id FROM accounts WHERE email = ?)"
+    cursor.execute(sql, (status, order_id, user_info["email"]))
+    if cursor.rowcount == 0:
+        raise ToolError("invalid orderId")
+    conn.commit()
+    return f"order {status} successfully"
+
+
+@mcp.tool(
+    name="submit_order",
+    description="Submits a pending order.",
+    tags={"order", "submit"},
+)
+async def submit_order(
+    order_id: Annotated[int, Field(description="The ID of the order to submit.")],
+    user_info_header: Annotated[str | None, Header(alias="user-info")] = None,
+) -> str:
+    return await _finalize_order(order_id, "submitted", user_info_header)
+
+
+@mcp.tool(
+    name="cancel_order",
+    description="Cancels a pending order.",
+    tags={"order", "cancel"},
+)
+async def cancel_order(
+    order_id: Annotated[int, Field(description="The ID of the order to cancel.")],
+    user_info_header: Annotated[str | None, Header(alias="user-info")] = None,
+) -> str:
+    return await _finalize_order(order_id, "canceled", user_info_header)
 
 
 @mcp.tool(
@@ -175,6 +460,30 @@ async def update_product_price(
     conn.commit()
 
     return ProductRecord(**dict(updated_row))
+
+
+@mcp.tool(
+    name="retrieve_product_details",
+    description="Retrieves details about the product, including price and quantity available, for the given product id.",
+    tags={"retrieve", "product", "price", "quantity"},
+)
+async def retrieve_product_details(
+    id: Annotated[
+        int,
+        Field(description="The ID of the product to update."),
+    ],
+) -> ProductRecord:
+    """
+    Ignored in favor of the description provided in the decorator above.
+    """
+
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM products WHERE id = ?", (id,))
+    retrieved_row = cursor.fetchone()
+    conn.commit()
+
+    return ProductRecord(**dict(retrieved_row))
 
 
 @mcp.tool(
