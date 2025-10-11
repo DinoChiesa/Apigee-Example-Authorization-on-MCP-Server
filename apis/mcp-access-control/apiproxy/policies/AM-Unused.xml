@@ -1,9 +1,0 @@
-<AssignMessage name='AM-Unused'>
-
-  <AssignVariable>
-    <Name>unused-variable</Name>
-    <Ref>fault.name</Ref>
-    <Value>unset</Value>
-  </AssignVariable>
-
-</AssignMessage>

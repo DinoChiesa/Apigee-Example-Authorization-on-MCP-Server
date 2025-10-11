@@ -1,7 +1,8 @@
-<ProxyEndpoint name="endpoint1">
+<ProxyEndpoint name="well-known-oauth-protected-resource">
 
   <HTTPProxyConnection>
-    <BasePath>/.well-known</BasePath>
+    <!-- per IETF RFC 8414 Section 3 -->
+    <BasePath>/.well-known/oauth-protected-resource/mcp-access-control/mcp</BasePath>
   </HTTPProxyConnection>
 
   <FaultRules/>
@@ -37,6 +38,11 @@
 
   <Flows>
     <Flow name="oauth-protected-resource-metadata">
+      <!-- full path will be eg,
+           /.well-known/oauth-protected-resource/mcp-access-control/mcp/ -->
+      <Condition>
+        proxy.pathsuffix ~~ "/?" AND request.verb = "GET"
+      </Condition>
       <Response>
         <Step>
           <Name>JS-Extract-Protected-Resource-Path</Name>
@@ -45,12 +51,6 @@
           <Name>AM-OAuth-Protected-Resource-Response</Name>
         </Step>
       </Response>
-      <!-- full path will be eg,
-           /.well-known/oauth-protected-resource/mcp-access-control/mcp/ -->
-      <Condition>
-        proxy.pathsuffix ~~ "/oauth-protected-resource/([^/]+)(/mcp|/mcp/|/)?" AND
-        request.verb = "GET"
-      </Condition>
     </Flow>
 
     <Flow name="unknown-request">
@@ -64,7 +64,6 @@
 
   </Flows>
 
-  <RouteRule name='rule1'>
-  </RouteRule>
+  <RouteRule name='loopback'/>
 
 </ProxyEndpoint>

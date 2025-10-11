@@ -35,6 +35,16 @@
     </Response>
   </PostClientFlow>
 
+  <EventFlow content-type="text/event-stream">
+    <Response>
+        <Step>
+          <Name>JS-Filter-Tools-Event</Name>
+          <Condition>(accesscontrol.mcp_method = "tools/list") and
+          NOT (verifyapikey.VerifyAPIKey-1.apiproduct.tools-allowlist = null) </Condition>
+        </Step>
+    </Response>
+  </EventFlow>
+
   <Flows>
 
     <Flow name="mcp">
@@ -48,12 +58,9 @@
           <Name>VerifyJWT-1</Name>
         </Step>
 
-        <!-- TODO: add VerifyAPIKey -->
-        <!--
         <Step>
-          <Name>VerifyJWT-1</Name>
+          <Name>VerifyAPIKey-1</Name>
         </Step>
-        -->
 
         <Step>
           <Name>AM-AccessControl-Variables</Name>
@@ -69,6 +76,13 @@
         </Step>
       </Request>
       <Response>
+
+        <Step>
+          <Name>JS-Filter-Tools-Response</Name>
+          <Condition>(accesscontrol.mcp_method = "tools/list") and
+          NOT (verifyapikey.VerifyAPIKey-1.apiproduct.tools-allowlist = null) </Condition>
+        </Step>
+
       </Response>
       <Condition>
         proxy.pathsuffix ~~ "/mcp/?" and

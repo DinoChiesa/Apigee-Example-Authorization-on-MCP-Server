@@ -18,4 +18,5 @@ if ! podman image exists "${imagename}:${timestamp}" >/dev/null 2>&1; then
     exit 1
 fi
 
+echo "using Image ${imagename}:${timestamp}" >&2
 podman run -it -e "PORT=8088"   --env-file .env -p 5055:8088 --init "${imagename}":"${timestamp}"

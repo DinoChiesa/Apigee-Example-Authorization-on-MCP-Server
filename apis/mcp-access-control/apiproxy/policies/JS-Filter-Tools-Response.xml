@@ -1,0 +1,7 @@
+<Javascript name='JS-Filter-Tools-Response' timeLimit='1200' >
+  <Properties>
+    <Property name='allow-list-var'>verifyapikey.VerifyAPIKey-1.apiproduct.tools-allowlist</Property>
+    <Property name='content-var'>response.content</Property>
+  </Properties>
+  <ResourceURL>jsc://filter-Tools.js</ResourceURL>
+</Javascript>

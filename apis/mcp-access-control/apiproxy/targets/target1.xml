@@ -18,6 +18,6 @@
   <HTTPTargetConnection>
     <!-- the following will be changed at deployment time by
          9-import-and-deploy-apigee-proxies.sh -->
-    <URL>https://products-mcp-service-something123-uw.a.run.app</URL>
+    <URL>https://products-mcp-service-WILL-BE-REPLACED.a.run.app</URL>
   </HTTPTargetConnection>
 </TargetEndpoint>

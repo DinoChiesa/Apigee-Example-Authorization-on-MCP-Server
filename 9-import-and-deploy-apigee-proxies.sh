@@ -129,20 +129,17 @@ else
   printf "The target URL for the API Proxy is unchanged...\n"
 fi
 
-
+printf "Replacing property values for OIDC Server (%s)...\n" "${OIDC_SERVER}"
+replace_property_value "oidc_server" "$OIDC_SERVER" \
+                       "$tmpdir/apis/${PROXY_NAME}/apiproxy/resources/properties/settings.properties"
 replace_property_value "oidc_server_issuer" "${OIDC_SERVER}" \
                        "$tmpdir/apis/${PROXY_NAME}/apiproxy/resources/properties/settings.properties"
-
 replace_property_value "oidc_server_jwks" "${OIDC_SERVER}.well-known/jwks.json" \
                        "$tmpdir/apis/${PROXY_NAME}/apiproxy/resources/properties/settings.properties"
-
-replace_property_value "oidc_server" "$OIDC_SERVER" \
-                       "$tmpdir/apis/well-known-endpoints/apiproxy/resources/properties/settings.properties"
 
 
 TOKEN=$(gcloud auth print-access-token)
 import_and_deploy_apiproxy "$PROXY_NAME" "$tmpdir/apis/${PROXY_NAME}" "${APIGEE_PROJECT_ID}" "$APIGEE_ENV"
-import_and_deploy_apiproxy "well-known-endpoints" "$tmpdir/apis/well-known-endpoints" "${APIGEE_PROJECT_ID}" "$APIGEE_ENV"
 
 if [[ $need_wait -eq 1 ]]; then
   printf "Waiting...\n"

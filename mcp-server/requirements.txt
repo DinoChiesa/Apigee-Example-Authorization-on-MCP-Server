@@ -1,4 +1,5 @@
 fastmcp
+fastapi
 httpx
 pydantic
 uvicorn
