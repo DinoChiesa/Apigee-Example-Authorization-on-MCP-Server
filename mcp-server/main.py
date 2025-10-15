@@ -547,9 +547,13 @@ async def search_product(
         for t in (term.strip() for term in termExpression.split("|"))
         if t
     ]
-    regex = "|".join(terms)
-    print(f"regex: {regex}")
+    # The langgraph agent slips in a backslash into the string. Strip it.
+    regex = "|".join(terms).replace("\\", "")
+    print(f"search_product regex: {regex}")
 
+    # in some cases the regex is invalid?
+    # Error calling tool 'search_product': pattern not valid regex
+    # This try block attempts to catch that.
     try:
         sql = "SELECT id, name, description, price, keywords, available FROM products WHERE keywords REGEXP ? OR name REGEXP ? OR description REGEXP ?"
         cursor.execute(sql, (regex, regex, regex))
@@ -557,6 +561,8 @@ async def search_product(
         products = [ProductRecord(**dict(row)) for row in rows]
         return products
     except Exception:
+        # AI! emit some meaningful information about the exception here.
+        print(f"Exception: {regex}")
         return []
 
 
