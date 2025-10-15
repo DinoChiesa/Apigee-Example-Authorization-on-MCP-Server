@@ -560,9 +560,8 @@ async def search_product(
         rows = cursor.fetchall()
         products = [ProductRecord(**dict(row)) for row in rows]
         return products
-    except Exception:
-        # AI! emit some meaningful information about the exception here.
-        print(f"Exception: {regex}")
+    except Exception as e:
+        print(f"Exception processing regex '{regex}': {e}")
         return []
 
 
