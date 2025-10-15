@@ -96,6 +96,13 @@ class ProductRecord(BaseModel):
     ]
 
 
+class SimpleProductRecord(BaseModel):
+    """Represents a product with just id and name."""
+
+    id: int
+    name: str
+
+
 class AccountRecord(BaseModel):
     """Represents a single account."""
 
@@ -544,6 +551,30 @@ async def search_product(
 
     sql = "SELECT id, name, description, price, keywords, available FROM products WHERE keywords REGEXP ? OR name REGEXP ? OR description REGEXP ?"
     cursor.execute(sql, (regex, regex, regex))
+    rows = cursor.fetchall()
+    products = [ProductRecord(**dict(row)) for row in rows]
+    return products
+
+
+@mcp.tool(
+    name="select_random_products",
+    description="Selects a number of random products. Helpful for giving a random representaiton of the available products.",
+    tags={"product", "random", "list"},
+)
+async def select_random_products(
+    num: Annotated[
+        int,
+        Field(
+            description="The number of random products to select (between 3 and 11 inclusive). Defaults to 5."
+        ),
+    ] = 5,
+) -> List[ProductRecord]:
+    if not (3 <= num <= 11):
+        num = 5
+
+    cursor = conn.cursor()
+    sql = "SELECT id, name, description, price, keywords, available FROM products ORDER BY RANDOM() LIMIT ?"
+    cursor.execute(sql, (num,))
     rows = cursor.fetchall()
     products = [ProductRecord(**dict(row)) for row in rows]
     return products
