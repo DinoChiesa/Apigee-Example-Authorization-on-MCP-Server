@@ -550,14 +550,14 @@ async def search_product(
     regex = "|".join(terms)
     print(f"regex: {regex}")
 
-    # AI! wrap the following database query in a try: except block , and
-    # in the except block , return an empty set of products.
-
-    sql = "SELECT id, name, description, price, keywords, available FROM products WHERE keywords REGEXP ? OR name REGEXP ? OR description REGEXP ?"
-    cursor.execute(sql, (regex, regex, regex))
-    rows = cursor.fetchall()
-    products = [ProductRecord(**dict(row)) for row in rows]
-    return products
+    try:
+        sql = "SELECT id, name, description, price, keywords, available FROM products WHERE keywords REGEXP ? OR name REGEXP ? OR description REGEXP ?"
+        cursor.execute(sql, (regex, regex, regex))
+        rows = cursor.fetchall()
+        products = [ProductRecord(**dict(row)) for row in rows]
+        return products
+    except Exception:
+        return []
 
 
 @mcp.tool(
