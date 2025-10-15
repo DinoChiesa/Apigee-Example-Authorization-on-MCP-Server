@@ -548,6 +548,10 @@ async def search_product(
         if t
     ]
     regex = "|".join(terms)
+    print(f"regex: {regex}")
+
+    # AI! wrap the following database query in a try: except block , and
+    # in the except block , return an empty set of products.
 
     sql = "SELECT id, name, description, price, keywords, available FROM products WHERE keywords REGEXP ? OR name REGEXP ? OR description REGEXP ?"
     cursor.execute(sql, (regex, regex, regex))
