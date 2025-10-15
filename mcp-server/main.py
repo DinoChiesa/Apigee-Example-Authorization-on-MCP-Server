@@ -551,7 +551,7 @@ async def search_product(
     regex = "|".join(terms).replace("\\", "")
     print(f"search_product regex: {regex}")
 
-    # in some cases the regex is invalid?
+    # In some cases the regex is invalid.
     # Error calling tool 'search_product': pattern not valid regex
     # This try block attempts to catch that.
     try:
@@ -561,7 +561,7 @@ async def search_product(
         products = [ProductRecord(**dict(row)) for row in rows]
         return products
     except Exception as e:
-        print(f"Exception processing regex '{regex}': {e}")
+        print(f"Exception during query: {e}")
         return []
 
 
