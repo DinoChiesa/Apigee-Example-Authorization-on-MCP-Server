@@ -40,7 +40,7 @@ check_shell_variables() {
 
   printf "Settings in use:\n"
   for var_name in "$@"; do
-    if [[ "$var_name" == *_APIKEY || "$var_name" == *_SECRET || "$var_name" == *_CLIENT_ID ]]; then
+    if [[ "$var_name" == *_APIKEY || "$var_name" == *_API_KEY || "$var_name" == *_SECRET || "$var_name" == *_CLIENT_ID ]]; then
       local value="${!var_name}"
       local dots
       dots=$(printf '%*s' "${#value}" '' | tr ' ' '.')

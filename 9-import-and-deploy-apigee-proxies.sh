@@ -17,7 +17,7 @@
 #
 
 PROXY_NAME="mcp-access-control"
-service_name="products-mcp-service"
+#service_name="products-mcp-service"
 need_wait=0
 
 source ./lib/utils.sh
@@ -101,13 +101,13 @@ if [[ ! -d "$HOME/.apigeecli/bin" ]]; then
 fi
 export PATH=$PATH:$HOME/.apigeecli/bin
 
-if ! gcloud run services describe "${service_name}" \
+if ! gcloud run services describe "${CLOUDRUN_SERVICE_NAME}" \
   --project "$CLOUDRUN_PROJECT_ID" --format='value(status.url)' 2>&1 >>/dev/null; then
-  printf "The %s service is not deployed to cloud run. Please deploy it.\n" "$service_name"
+  printf "The %s service is not deployed to cloud run. Please deploy it.\n" "$CLOUDRUN_SERVICE_NAME"
   exit 1
 fi
 
-service_url=$(gcloud run services describe "${service_name}" \
+service_url=$(gcloud run services describe "${CLOUDRUN_SERVICE_NAME}" \
   --project "$CLOUDRUN_PROJECT_ID" --format='value(status.url)')
 
 tmpdir=$(mktemp -d)
