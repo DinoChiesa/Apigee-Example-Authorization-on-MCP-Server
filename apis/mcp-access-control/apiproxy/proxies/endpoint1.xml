@@ -30,12 +30,11 @@
   </PostFlow>
 
   <PostClientFlow name="PostFlow">
-    <Request/>
     <Response>
     </Response>
   </PostClientFlow>
 
-  <EventFlow content-type="text/event-stream">
+  <EventFlow content-type="text/event-stream" name='eventstream'>
     <Response>
         <Step>
           <Name>JS-Filter-Tools-Event</Name>
